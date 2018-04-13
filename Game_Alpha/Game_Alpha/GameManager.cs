@@ -19,7 +19,7 @@ namespace Game_Alpha
 
         public eStage Stage
         {
-            get { return m_eStage}
+            get { return m_eStage; }
 
         }
 
@@ -38,7 +38,7 @@ namespace Game_Alpha
         {
             Console.Write("캐릭터 이름 입력 : ");
             string strName = Console.ReadLine();
-            m_cPlayer = new Player(strName, 100, 100, 10, 10, 10, 0, 100);
+            m_cPlayer = new Player(strName, 100, 100, 10, 10, 10, 0, 1000000);
             m_eStage = eStage.TOWN;
         }
 
@@ -106,9 +106,9 @@ namespace Game_Alpha
             {
                 case eMonster.SLIME:
                     m_cMonster = new Player("Slime", 100, 100, 20, 0, 0, 100, 0);
-                    m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.WoodSword));
+                    m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.WoodenSword));
                     m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.WoodenArmor));
-                    m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.Ring));
+                    m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.WoodenRing));
                     break;
                 case eMonster.SKELETON:
                     m_cMonster = new Player("Skeleton", 200, 200, 30, 0, 0, 200, 0);
@@ -119,7 +119,7 @@ namespace Game_Alpha
                 case eMonster.BOSS:
                     m_cMonster = new Player("Boss", 400, 400, 50, 0, 0, 500, 0);
                     m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.WoodenArmor));
-                    m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.Ring));
+                    m_cMonster.SetInventory(m_cItemManager.GetItem(ItemManager.eItem.WoodenRing));
                     break;
                 default:
                     break;
@@ -135,7 +135,7 @@ namespace Game_Alpha
             else
             {
                 m_eStage = eStage.GAMEOVER;
-
+                return true;
 
             }
 
@@ -155,6 +155,8 @@ namespace Game_Alpha
                     return true;
                 }
             }
+            m_cPlayer.Show();
+            Console.WriteLine("##################");
             return false;
         }
 

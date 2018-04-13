@@ -9,12 +9,12 @@ namespace Game_Alpha
 {
     class ItemManager
     {
-        public enum eItem { WoodSword, BoneSword, WoodenArmor, BoneArmor, Ring, BoneRing, HPPotion, MPPotion, Sotne, Boom, MAX }
+        public enum eItem { WoodenSword, BoneSword, WoodenArmor, BoneArmor, WoodenRing, BoneRing, HPPotion, MPPotion, Sotne, Boom, MAX }
         List<Item> m_listItemList;
 
         public ItemManager()
         {
-            m_listItemList = new List<Item>(); // 생성자 만듦
+            m_listItemList = new List<Item>((int)eItem.MAX); // 생성자 만듦
 
             m_listItemList.Add(new Item(Item.eItemKind.Weapon, "목검(Wooden Sword)", "데미지증가", new Status(100), 100));
             m_listItemList.Add(new Item(Item.eItemKind.Weapon, "본 소드(Bone Sword)", "데미지증가", new Status(200), 200));
@@ -25,7 +25,7 @@ namespace Game_Alpha
             m_listItemList.Add(new Item(Item.eItemKind.Etc, "힐링포션(Healing Potion)", "체력회복", new Status(0, 0, 0, 100), 100));
             m_listItemList.Add(new Item(Item.eItemKind.Etc, "마나포션(Mana Potion)", "마나회복", new Status(0, 0, 0, 0, 100), 100));
             m_listItemList.Add(new Item(Item.eItemKind.Etc, "짱돌(Great Stone)", "단일 적 데미지", new Status(100), 100));
-            m_listItemList.Add(new Item(Item.eItemKind.Etc, "폭탄(Bomb)", "다수 적 데미지", new Status(100), 100));
+            m_listItemList.Add(new Item(Item.eItemKind.Etc, "폭탄(Bomb)", "다수 적 데미지", new Status(200), 200));
 
         }
 
@@ -36,10 +36,10 @@ namespace Game_Alpha
     }
     // 아이템 메니저 생성.
     // 아이템 메니저를 통하여 아이템 종류 및 설정을 변경할 수 있다.
+
     class Item
     {
         public enum eItemKind { Weapon, Armor, Acc, Etc } // enum을 이용해 아이템 종류 지정
-
         public Item(eItemKind eitemkind, string name, string comment, Status sStatus, int nGold)
         {
             m_eItemKind = eitemkind;
@@ -123,6 +123,7 @@ namespace Game_Alpha
         // 연산자 오버로딩
 
     }// 정적할당 목적을 위한 구조체 생성
+    // 정적할당 이유 : 플레이어 능력치 변경용
 
 
     class Player
@@ -132,26 +133,27 @@ namespace Game_Alpha
         // 이름
         string m_strName;
         int m_nLv, m_nExp;
-        int m_nMaxHp, m_nMaxMp;
+        public int m_nMaxHp, m_nMaxMp;
 
         int m_nGold; // 소지금
         List<Item> m_listInventory = new List<Item>(); // 인벤토리
-        List<Item> m_listEquip = new List<Item>(); // 장비창
+        List<Item> m_listEquip = new List<Item>((int)eEquipKind.MAX); // 장비창
         public enum eEquipKind { Weapon, Armor, Acc, MAX }
 
-        public Player(string name, int nHp = 100, int nMp = 100, int nStr = 10, int nDef = 10, int nInteli = 10, int nExp = 0, int nGold = 100)
+        public Player(string name, int nHp = 100, int nMp = 100, int nStr = 10, int nDef = 10, int nInteli = 10, int nExp = 10, int nGold = 0)
         {
             m_cStatus = new Status(nStr, nDef, nInteli, nHp, nMp);
             m_strName = name;
             m_nMaxHp = nHp; m_nMaxMp = nMp;
             m_nExp = nExp; m_nGold = nGold;
             m_nLv = 1;
-
-
+            m_listEquip = new List<Item>((int)eEquipKind.MAX);
+            for (int i = 0; i < (int)eEquipKind.MAX; i++)
+            {
+                m_listEquip.Add(null);
+            }
         }
         // 플레이어 생성자 작성과 동시에 상태 생성자 생성
-
-        
 
         public void Attack(Player cTarget)
         {
@@ -210,7 +212,7 @@ namespace Game_Alpha
         {
             if (m_nExp > maxexp)
             {
-                m_cStatus.AddStatus(10);
+                m_cStatus.AddStatus(var);
                 m_nMaxHp += var; m_nMaxMp += var;
                 m_nExp -= maxexp;
                 return true;
@@ -232,7 +234,7 @@ namespace Game_Alpha
             if (item.ItemKind < Item.eItemKind.Etc)
             {
                 ReleaseEquip((eEquipKind)item.ItemKind);
-                Item cEquipItem = m_listEquip[(int)eEquipKind.Weapon];
+                m_listEquip[(int)eEquipKind.Weapon] = item;
                 m_cStatus += item.Func;
 
                 DeleteInventory(item);
@@ -283,18 +285,20 @@ namespace Game_Alpha
 
     class Program
     {
-        
 
+        public enum eStage { CREATE, TOWN, INVENTORY, STORE, FILED, BATTLE, GAMEOVER, THE_END }
+        public enum eMonster { SLIME, SKELETON, BOSS, MAX }
+        static eStage m_eStage = eStage.CREATE; static eMonster m_eMonster;
         static bool Battle(Player cPlayer, Player cMonster)
         {
+            
             Console.WriteLine("#############");
             if (!cPlayer.Dead())
                 cPlayer.Attack(cMonster);
             else
             {
                 m_eStage = eStage.GAMEOVER;
-
-
+                return true;
             }
 
             cMonster.Show();
@@ -313,6 +317,8 @@ namespace Game_Alpha
                     return true;
                 }
             }
+            cPlayer.Show();
+            Console.WriteLine("#######################");
             return false;
         }
         static void swapStatus(Status a, Status b)
@@ -330,7 +336,7 @@ namespace Game_Alpha
             swapStatus(sA, sB);
             Console.WriteLine("{0}, {1}", sA.m_nStr, sA.m_nDef);
             Console.WriteLine("{0}, {1}", sB.m_nStr, sB.m_nDef);
-            
+
         }
 
         static void Main(string[] args)
@@ -341,6 +347,7 @@ namespace Game_Alpha
             Player cPlayer = null; // 구조체 포인터와 유사한 역할을 함. C++기준으로 동적할당이 됨.
             Player cMonster = null;
             Player cStore = new Player("Store");
+
             // C#에서 구조체는 무조건 정적할당.
 
 
@@ -350,20 +357,20 @@ namespace Game_Alpha
             cStore.SetInventory(cItemManager.GetItem(ItemManager.eItem.Boom));
 
             Status sStatus = new Status(100);
-            
+
 
 
 
             int nSelect;
 
-            while (cGameManager.e != eStage.GAMEOVER)
+            while (m_eStage != eStage.GAMEOVER)
             {
                 switch (m_eStage)
                 {
                     case eStage.CREATE:
                         Console.Write("캐릭터 이름 입력 : ");
                         string strName = Console.ReadLine();
-                        cPlayer = new Player(strName, 100, 100, 10, 10, 10, 0, 100);
+                        cPlayer = new Player(strName, 100, 100, 10, 10, 10, 0, 1000000);
                         m_eStage = eStage.TOWN;
                         break;
                     case eStage.STORE:
@@ -400,7 +407,9 @@ namespace Game_Alpha
 
                         if (nSelect == 1)
                         {
-
+                            nSelect = int.Parse(Console.ReadLine());
+                            Item cItem = cPlayer.GetInventory(nSelect);
+                            cPlayer.SetEquip(cItem);
                         }
                         else if (nSelect == 2)
                         {
@@ -408,6 +417,7 @@ namespace Game_Alpha
                             Item cItem = cPlayer.GetInventory(nSelect);
                             for (int i = 0; i < (int)Player.eEquipKind.MAX; i++)
                                 Console.WriteLine(String.Format("{0}. {1}", i, (Player.eEquipKind)i));
+                            cPlayer.ReleaseEquip((Player.eEquipKind)nSelect);
                         }
                         else
                         {
@@ -416,35 +426,37 @@ namespace Game_Alpha
                         break;
                     case eStage.FILED:
                         Console.Write("사냥터를 선택하세요 ");
-                        for (int i = (int)eMonster.SLIME + 1; i < (int)eMonster.MAX; i++)
+                        for (int i = (int)eMonster.SLIME; i < (int)eMonster.MAX; i++)
                             Console.WriteLine(String.Format("{0}. {1}", i, (eMonster)i));
                         m_eMonster = (eMonster)int.Parse(Console.ReadLine());
                         switch (m_eMonster)
                         {
                             case eMonster.SLIME:
-                                cMonster = new Player("Slime", 100, 100, 20, 0, 0, 100, 0);
-                                cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.WoodSword));
+                                cMonster = new Player("Slime", 100, 100, 20, 0, 0, 100, 100);
+                                cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.WoodenSword));
                                 cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.WoodenArmor));
-                                cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.Ring));
+                                cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.WoodenRing));
                                 break;
                             case eMonster.SKELETON:
-                                cMonster = new Player("Skeleton", 200, 200, 30, 0, 0, 200, 0);
+                                cMonster = new Player("Skeleton", 200, 200, 30, 0, 0, 200, 200);
                                 cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.BoneSword));
                                 cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.BoneArmor));
                                 cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.BoneRing));
                                 break;
                             case eMonster.BOSS:
-                                cMonster = new Player("Boss", 400, 400, 50, 0, 0, 500, 0);
-                                cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.WoodenArmor));
-                                cMonster.SetInventory(cItemManager.GetItem(ItemManager.eItem.Ring));
+                                cMonster = new Player("Boss", 400, 400, 50, 0, 0, 500, 500);
                                 break;
                             default:
+                                m_eStage = eStage.FILED;
                                 break;
                         }
                         m_eStage = eStage.BATTLE;
                         break;
                     case eStage.BATTLE:
                         Battle(cPlayer, cMonster);
+                        break;
+                    case eStage.GAMEOVER:
+                        Console.WriteLine("Game Over");
                         break;
                     case eStage.THE_END:
                         Console.WriteLine("THE END");
